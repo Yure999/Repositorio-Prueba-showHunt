@@ -3,6 +3,7 @@ import java.sql.Connection;
 import java.util.Calendar;
 import java.util.Date;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -10,14 +11,15 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
 public class Conexion {
-	private static String USUARIO = "usuario";
+	private String USUARIO = "usuario";
 	private static String PASS = "12345";
 	private static final String BBDD = "showHuntDB";
 	private static final String URL = "jdbc:mysql://localhost:3306/" + BBDD;
 	private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
 	private static String user;
+	private Connection miConexion;
 
-	static {
+	public Conexion() {
 		try {
 			Class.forName(DRIVER);
 		} catch (Exception e) {
@@ -33,14 +35,14 @@ public class Conexion {
 	 * 
 	 * @return
 	 */
-	public Connection conectar(String conexionUser) {
-		Connection conexion = null;
+	public void conectar(String conexionUser) {
+
 		if (this.USUARIO.equals("root")) {
 			this.PASS = "";
 		}
 		System.out.println(URL + conexionUser + PASS);
 		try {
-			conexion = DriverManager.getConnection(URL, conexionUser, PASS);
+			miConexion = DriverManager.getConnection(URL, conexionUser, PASS);
 			System.out.println("Conexión OK");
 
 		} catch (SQLException e) {
@@ -48,7 +50,6 @@ public class Conexion {
 			e.printStackTrace();
 		}
 
-		return conexion;
 	}
 
 	/**
@@ -59,18 +60,19 @@ public class Conexion {
 	 * @param userName
 	 * @return
 	 */
-	public int getUserID(Conexion conexion, String userName) {
-		Connection cn = null;// conexion
+	public int getUserID() {
+
 		Statement stm = null;// cosa que hace query
 		ResultSet rs = null;
 		int userID = 0;
-
 		try {
-			cn = conexion.conectar(this.USUARIO);
-			stm = cn.createStatement();
+			stm = miConexion.createStatement();
 			String selectQuery = "select id_usuario from usuarios where nombreUsuario = '" + this.user + "';";
 			rs = stm.executeQuery(selectQuery);
-			userID = rs.getInt("id_usuario");
+
+			if (rs.next()) {
+				userID = rs.getInt("id_usuario");
+			}
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -84,9 +86,6 @@ public class Conexion {
 					stm.close();
 				}
 
-				if (cn != null) {
-					cn.close();
-				}
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
@@ -100,14 +99,12 @@ public class Conexion {
 	 * 
 	 * @param conexion
 	 */
-	public void getUsers(Conexion conexion) {
-		Connection cn = null;// conexion
+	public void getUsers() {
 		Statement stm = null;// cosa que hace querys
 		ResultSet rs = null;// las querys
 		if (this.USUARIO.equals("root")) {
 			try {
-				cn = conexion.conectar(this.USUARIO);// llama al metodo conectar de la clase conexion
-				stm = cn.createStatement();// inicia las cosas
+				stm = miConexion.createStatement();// inicia las cosas
 				rs = stm.executeQuery("select * from usuarios; ");
 
 				while (rs.next()) {
@@ -133,9 +130,6 @@ public class Conexion {
 						stm.close();
 					}
 
-					if (cn != null) {
-						cn.close();
-					}
 				} catch (Exception e2) {
 					e2.printStackTrace();
 				}
@@ -151,16 +145,14 @@ public class Conexion {
 	 * 
 	 * @param conexion
 	 */
-	public void getShows(Conexion conexion) {
+	public void getShows() {
 
-		Connection cn = null;// conexion
 		Statement stm = null;// cosa que hace querys
 		ResultSet rs = null;// las querys
 
 		if (this.USUARIO.equals("root")) {
 			try {
-				cn = conexion.conectar(this.USUARIO);// llama al metodo conectar de la clase conexion
-				stm = cn.createStatement();// inicia las cosas
+				stm = miConexion.createStatement();// inicia las cosas
 				rs = stm.executeQuery("select * from conciertos; ");
 
 				while (rs.next()) {
@@ -170,7 +162,7 @@ public class Conexion {
 					String location = rs.getString("lugar");
 					String ticketsLink = rs.getString("linkEntradas");
 
-					System.out.println("SHOWS INFO: Show ID: " + idShow + " Band ID: " + idBand + " Show city: " + city
+					System.out.println("SHOW INFO: Show ID: " + idShow + " Band ID: " + idBand + " Show city: " + city
 							+ " Show location: " + location + " Tickets link: " + ticketsLink);
 				}
 
@@ -186,9 +178,6 @@ public class Conexion {
 						stm.close();
 					}
 
-					if (cn != null) {
-						cn.close();
-					}
 				} catch (Exception e2) {
 					e2.printStackTrace();
 				}
@@ -204,15 +193,13 @@ public class Conexion {
 	 * 
 	 * @param conexion
 	 */
-	public void getBands(Conexion conexion) {
-		Connection cn = null;// conexion
+	public void getBands() {
 		Statement stm = null;// cosa que hace querys
 		ResultSet rs = null;// las querys
 
 		if (this.USUARIO.equals("root")) {
 			try {
-				cn = conexion.conectar(this.USUARIO);// llama al metodo conectar de la clase conexion
-				stm = cn.createStatement();// inicia las cosas
+				stm = miConexion.createStatement();// inicia las cosas
 				rs = stm.executeQuery("select * from grupos; ");
 
 				while (rs.next()) {
@@ -235,9 +222,6 @@ public class Conexion {
 						stm.close();
 					}
 
-					if (cn != null) {
-						cn.close();
-					}
 				} catch (Exception e2) {
 					e2.printStackTrace();
 				}
@@ -254,22 +238,18 @@ public class Conexion {
 	 * 
 	 * @param conexion
 	 */
-	public void showRecomended(Conexion conexion) {
-		Connection cn = null;// conexion
-		Statement stm = null;// cosa que hace querys
+	public void showRecomended() {
 		ResultSet rs = null;// las querys
 
 		try {
-			int userID = conexion.getUserID(conexion, this.user);
-			cn = conexion.conectar(this.USUARIO);
-			stm = cn.createStatement();
+			int userID = this.getUserID();
 			String query = "select distinct * from conciertos\r\n"
 					+ "inner join favoritos f on conciertos.id_grupo = f.id_grupo\r\n"
 					+ "inner join historial h on conciertos.id_grupo = h.id_grupo\r\n"
-					+ "where (conciertos.id_grupo = f.id_grupo or conciertos.id_grupo = h.id_grupo) and id_usuario = '"
-					+ userID + "';";
-
-			rs = stm.executeQuery(query);
+					+ "where (conciertos.id_grupo = f.id_grupo or conciertos.id_grupo = h.id_grupo) and id_usuario = ?;";
+			PreparedStatement pstms = miConexion.prepareStatement(query);
+			pstms.setInt(1, this.getUserID());
+			rs = pstms.executeQuery();
 			while (rs.next()) {
 
 			}
@@ -281,13 +261,6 @@ public class Conexion {
 					rs.close();
 				}
 
-				if (stm != null) {
-					stm.close();
-				}
-
-				if (cn != null) {
-					cn.close();
-				}
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
@@ -304,32 +277,20 @@ public class Conexion {
 	 * @param userMail
 	 * @param userCity
 	 */
-	public void registerUser(Conexion conexion, String userName, String userPass, String userMail, String userCity) {
-		Connection cn = null;// conexion
-		Statement stm = null;// cosa que hace querys
+	public void registerUser(String userName, String userPass, String userMail, String userCity) {
 		System.out.println("hola");
 		try {
-			cn = conexion.conectar(this.USUARIO);// llama al metodo conectar de la clase conexion
-			stm = cn.createStatement();// inicia las cosas
-			String query = "insert into usuarios(nombreUsuario, passwordUsuario, correoUsuario, ciudadUsuario) values('"
-					+ userName + "','" + userPass + "','" + userMail + "','" + userCity + "');";
-			stm.executeUpdate(query);
+			String query = "insert into usuarios(nombreUsuario, passwordUsuario, correoUsuario, ciudadUsuario) values(?,?,?,?);";
+			PreparedStatement pstms = miConexion.prepareStatement(query);
+			pstms.setString(1, userName);
+			pstms.setString(2, userPass);
+			pstms.setString(3, userMail);
+			pstms.setString(4, userCity);
+			pstms.executeUpdate();
 			System.out.println("entra");
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				if (stm != null) {
-					stm.close();
-				}
-
-				if (cn != null) {
-					cn.close();
-				}
-			} catch (Exception e2) {
-				e2.printStackTrace();
-			}
 		}
 	}
 
@@ -346,24 +307,24 @@ public class Conexion {
 	 * @param userPass
 	 * @return
 	 */
-	public boolean loginUser(Conexion conexion, String userName, String userPass) {
-		Connection cn = null;// conexion
-		Statement stm = null;// cosa que hace querys
+	public boolean loginUser(String userName, String userPass) {
 		ResultSet rs = null;// las querys
 
 		try {
-			cn = conexion.conectar(this.USUARIO);// llama al metodo conectar de la clase conexion
-			stm = cn.createStatement();// inicia las cosas
-			String query = "select nombreUsuario, passwordUsuario, administrador from usuarios where nombreUsuario ='"
-					+ userName + "' and passwordUsuario ='" + userPass + "';";
-			rs = stm.executeQuery(query);
+			this.conectar(this.USUARIO);// llama al metodo conectar de la clase conexion
+			String query = "select nombreUsuario, passwordUsuario, administrador from usuarios where nombreUsuario = ? and passwordUsuario =?;";
+			PreparedStatement pstms = miConexion.prepareStatement(query);
+			pstms.setString(1, userName);
+			pstms.setString(2, userPass);
+
+			rs = pstms.executeQuery();
 
 			if (rs.next()) {
 				System.out.println("Login correcto");
 				int administrador = rs.getInt("administrador");
 				if (administrador == 1) {
 					this.USUARIO = "root";
-					conexion.conectar(this.USUARIO);
+					this.conectar(this.USUARIO);
 					System.out.println("conectado como root");
 				} else {
 					System.out.println("conectado como usuario");
@@ -384,13 +345,6 @@ public class Conexion {
 					rs.close();
 				}
 
-				if (stm != null) {
-					stm.close();
-				}
-
-				if (cn != null) {
-					cn.close();
-				}
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
@@ -406,31 +360,17 @@ public class Conexion {
 	 * @param conexion
 	 * @param userName
 	 */
-	public void removeUser(Conexion conexion, String userName) {
-		Connection cn = null;// conexion
-		Statement stm = null;// cosa que hace querys
+	public void removeUser(String userName) {
 
 		try {
-			cn = conexion.conectar(this.USUARIO);
-			stm = cn.createStatement();
-			String query = "delete from usuarios where nombreUsuario = '" + userName + "';";
-			stm.executeUpdate(query);
+			String query = "delete from usuarios where nombreUsuario = ?;";
+			PreparedStatement pstms = miConexion.prepareStatement(query);
+			pstms.setString(1, userName);
+			pstms.executeUpdate();
 			System.out.println("ususario " + userName + " borrado");
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				if (stm != null) {
-					stm.close();
-				}
-
-				if (cn != null) {
-					cn.close();
-				}
-			} catch (Exception e2) {
-				e2.printStackTrace();
-			}
 		}
 	}
 
@@ -444,17 +384,14 @@ public class Conexion {
 	 * @param conexion
 	 * @param searchedBandName
 	 */
-	public void searchByBand(Conexion conexion, String searchedBandName) {
-		Connection cn = null;// conexion
-		Statement stm = null;// cosa que hace query
+	public void searchByBand(String searchedBandName) {
 		ResultSet rs = null;// las querys
 		try {
-			cn = conexion.conectar(this.USUARIO);
-			stm = cn.createStatement();
-			String selectQuery = "select id_grupo, nombreGrupo, ciudad, lugar,fecha,linkEntradas from conciertos\r\n"
-					+ "    inner join grupos g on conciertos.id_grupo = g.id_grupo\r\n" + "    where nombreGrupo = '"
-					+ searchedBandName + "';";
-			rs = stm.executeQuery(selectQuery);
+			String selectQuery = "select g.id_grupo, nombreGrupo, ciudad, lugar,fecha,linkEntradas from conciertos\r\n"
+					+ "    inner join grupos g on conciertos.id_grupo = g.id_grupo\r\n" + "    where nombreGrupo = ?;";
+			PreparedStatement selectPstms = miConexion.prepareStatement(selectQuery);
+			selectPstms.setString(1, searchedBandName);
+			rs = selectPstms.executeQuery();
 
 			if (rs.next()) {
 				while (rs.next()) {
@@ -469,9 +406,13 @@ public class Conexion {
 							+ showCity + " en: " + showPlace + " el dia " + showDate + " link de compra de entradas: "
 							+ ticketsLink);
 
-					String insertQuery = "insert into historial(id_usuario, id_grupo)\r\n" + "values('" + this.user
-							+ "','" + bandID + "');";
-					stm.executeUpdate(insertQuery);
+					int userID = this.getUserID();
+					System.out.println(userID);
+					String insertQuery = "insert into historial(id_usuario, historial.id_grupo)\r\n" + "values('"
+							+ userID + "','" + bandID + "');";
+
+					PreparedStatement insertPstms = miConexion.prepareStatement(insertQuery);
+					insertPstms.executeUpdate();
 				}
 			} else {
 				System.out.println("No hay registros relacionados con el criterio de busqueda");
@@ -485,13 +426,6 @@ public class Conexion {
 					rs.close();
 				}
 
-				if (stm != null) {
-					stm.close();
-				}
-
-				if (cn != null) {
-					cn.close();
-				}
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
@@ -507,18 +441,15 @@ public class Conexion {
 	 * @param conexion
 	 * @param city
 	 */
-	public void searchByCity(Conexion conexion, String city) {
+	public void searchByCity(String city) {
 
-		Connection cn = null;// conexion
-		Statement stm = null;// cosa que hace query
 		ResultSet rs = null;// las querys
 		try {
-			cn = conexion.conectar(this.USUARIO);
-			stm = cn.createStatement();
 			String query = "select nombreGrupo, ciudad, lugar,fecha,linkEntradas from conciertos\r\n"
-					+ "    inner join grupos g on conciertos.id_grupo = g.id_grupo\r\n" + "    where ciudad  = '" + city
-					+ "';";
-			rs = stm.executeQuery(query);
+					+ "    inner join grupos g on conciertos.id_grupo = g.id_grupo\r\n" + "    where ciudad  = ? ;";
+			PreparedStatement pstms = miConexion.prepareStatement(query);
+			pstms.setString(1, city);
+			rs = pstms.executeQuery();
 
 			if (rs.next()) {
 				while (rs.next()) {
@@ -543,13 +474,6 @@ public class Conexion {
 					rs.close();
 				}
 
-				if (stm != null) {
-					stm.close();
-				}
-
-				if (cn != null) {
-					cn.close();
-				}
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
@@ -565,14 +489,12 @@ public class Conexion {
 	 * @param conexion
 	 * @param time
 	 */
-	public void searchByDate(Conexion conexion, int time) {
-		Connection cn = null;// conexion
+	public void searchByDate(int time) {
 		Statement stm = null;// cosa que hace query
 		ResultSet rs = null;// las querys
 
 		try {
-			cn = conexion.conectar(this.USUARIO);
-			stm = cn.createStatement();
+			stm = miConexion.createStatement();
 
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			Calendar date = Calendar.getInstance();
@@ -581,9 +503,9 @@ public class Conexion {
 			date.add(Calendar.DAY_OF_MONTH, time);
 			String newStringDate = sdf.format(date.getTime());
 
-			String query = "select nombreGrupo,ciudad,lugar,fecha,linkEntradas from conciertos\r\n" + 
-					"inner join grupos g on conciertos.id_grupo = g.id_grupo\r\n" + 
-					"where fecha > '"+stringDate+"' and fecha < '"+newStringDate+"';";
+			String query = "select nombreGrupo,ciudad,lugar,fecha,linkEntradas from conciertos\r\n"
+					+ "inner join grupos g on conciertos.id_grupo = g.id_grupo\r\n" + "where fecha > '" + stringDate
+					+ "' and fecha < '" + newStringDate + "';";
 			System.out.println(query);
 			rs = stm.executeQuery(query);
 
@@ -615,9 +537,6 @@ public class Conexion {
 					stm.close();
 				}
 
-				if (cn != null) {
-					cn.close();
-				}
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
@@ -632,37 +551,28 @@ public class Conexion {
 	 * @param conexion
 	 * @param bandID
 	 */
-	public void addToFavorites(Conexion conexion, int bandID) {
-
-		Connection cn = null;// conexion
-		Statement stm = null;// cosa que hace query
-		ResultSet rs = null;
+	public void addToFavorites(int bandID) {
 
 		try {
-			cn = conexion.conectar(this.USUARIO);
-			stm = cn.createStatement();
-			int userID = conexion.getUserID(conexion, this.user);
 
-			String insertQuery = "insert into favoritos(id_ususario,id_grupo)\r\n" + "    values(" + userID + ","
-					+ bandID + ");";
-			stm.executeUpdate(insertQuery);
+			String insertQuery = "insert into favoritos(id_ususario,id_grupo) values(?,?);";
+			PreparedStatement stms = miConexion.prepareStatement(insertQuery);
+			stms.setInt(1, this.getUserID());
+			stms.setInt(2, bandID);
+			stms.executeUpdate();
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} finally {
+		}
+	}
+
+	public void closeSession() {
+		if (miConexion != null) {
 			try {
-
-				if (stm != null) {
-					stm.close();
-				}
-
-				if (cn != null) {
-					cn.close();
-				}
-			} catch (Exception e2) {
-				e2.printStackTrace();
+				miConexion.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
-
 	}
 }

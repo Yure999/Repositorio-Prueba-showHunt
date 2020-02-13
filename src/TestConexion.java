@@ -9,11 +9,18 @@ public class TestConexion {
 		Conexion conexion = new Conexion();
 		Scanner sc1 = new Scanner(System.in);
 		String userName = "";
+		
+		System.out.println("LOGIN");
+		System.out.println("User: ");
+		userName = sc1.next();
+		System.out.println("Password: ");
+		String userPass = sc1.next();
+		conexion.loginUser(userName, userPass);
+		
 		while (true) {
 			System.out.println("1) See shows");
 			System.out.println("2) See users");
 			System.out.println("3) See bands");
-			System.out.println("4) Login");
 			System.out.println("5) Remove user");
 			System.out.println("6) search by band name");
 			System.out.println("7) Search by city name");
@@ -22,37 +29,34 @@ public class TestConexion {
 			int selector = sc1.nextInt();
 			switch (selector) {
 			case 1:
-				conexion.getShows(conexion);
+				conexion.getShows();
 				break;
 			case 2:
-				conexion.getUsers(conexion);
+				conexion.getUsers();
 				break;
 			case 3:
-				conexion.getBands(conexion);
-				break;
-			case 4:
-				System.out.println("User: ");
-				userName = sc1.next();
-				System.out.println("Password: ");
-				String userPass = sc1.next();
-				conexion.loginUser(conexion, userName, userPass);
+				conexion.getBands();
 				break;
 			case 5:
 				System.out.println("user: ");
 				userName = sc1.next();
-				conexion.removeUser(conexion, userName);
+				conexion.removeUser(userName);
+				break;
+			case 4:
+				System.out.print("UserID: ");
+				System.out.println(conexion.getUserID());
 				break;
 			case 6:
 				System.out.println("Band: ");
 				sc1.nextLine();
 				String bandName = sc1.nextLine();
 				System.out.println(bandName);
-				conexion.searchByBand(conexion, bandName );
+				conexion.searchByBand(bandName );
 				break;
 			case 7:
 				System.out.println("city: ");
 				String city = sc1.next();
-				conexion.searchByCity(conexion, city);
+				conexion.searchByCity(city);
 				break;
 			case 8:
 				System.out.println("1) 15 dias");
@@ -73,13 +77,16 @@ public class TestConexion {
 					System.out.println("no toques los cojones y elije una de las tres opciones");
 				}
 				
-				conexion.searchByDate(conexion, selectedTime);
+				conexion.searchByDate(selectedTime);
 				break;
 			case 9:
 				System.out.println("bandID: ");
 				int bandID = sc1.nextInt();
-				conexion.addToFavorites(conexion, bandID);
+				conexion.addToFavorites(bandID);
 				break;
+			case 10:
+				System.out.println("close session");
+				conexion.closeSession();
 			default:
 				throw new IllegalArgumentException("Unexpected value: " + selector);
 			}
